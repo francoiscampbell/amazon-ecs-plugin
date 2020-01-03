@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-//@Extension
+@Extension
 public class ECSProvisioningStrategy extends NodeProvisioner.Strategy {
     private static final Logger LOGGER = Logger.getLogger(ECSProvisioningStrategy.class.getName());
 
@@ -25,7 +25,7 @@ public class ECSProvisioningStrategy extends NodeProvisioner.Strategy {
         LoadStatistics.LoadStatisticsSnapshot snap = state.getSnapshot();
         Label label = state.getLabel();
 
-        int excessWorkload = snap.getQueueLength() - snap.getDefinedExecutors();
+        int excessWorkload = snap.getQueueLength() - snap.getAvailableExecutors() - snap.getConnectingExecutors();
 
         CLOUD:
         for (Cloud c : Jenkins.get().clouds) {
