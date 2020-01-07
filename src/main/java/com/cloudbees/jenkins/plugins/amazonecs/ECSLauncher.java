@@ -64,6 +64,8 @@ public class ECSLauncher extends JNLPLauncher {
     private final ECSService ecsService;
     private boolean launched;
 
+    public Task startedTask = null;
+
     @DataBoundConstructor
     public ECSLauncher(ECSCloud cloud, String tunnel, String vmargs) {
         super(tunnel, vmargs, RemotingWorkDirSettings.getDisabledDefaults());
@@ -102,23 +104,11 @@ public class ECSLauncher extends JNLPLauncher {
         }
 
         try {
-            LOGGER.log(Level.FINE, "[{0}]: Creating Task in cluster {1}", new Object[]{agent.getNodeName(), agent.getClusterArn()});
-
-            TaskDefinition taskDefinition = getTaskDefinition(agent.getNodeName(), agent.getTemplate(), cloud, ecsService);
-
-            Task startedTask = runECSTask(taskDefinition, cloud, agent.getTemplate(), ecsService, agent);
-
-            LOGGER.log(INFO, "[{0}]: TaskArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskArn()});
-            LOGGER.log(INFO, "[{0}]: TaskDefinitionArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskDefinitionArn()});
-            LOGGER.log(INFO, "[{0}]: ClusterArn: {1}", new Object[]{agent.getNodeName(), startedTask.getClusterArn()});
-            LOGGER.log(INFO, "[{0}]: ContainerInstanceArn: {1}", new Object[]{agent.getNodeName(), startedTask.getContainerInstanceArn()});
-
             long timeout = System.currentTimeMillis() + Duration.ofSeconds(cloud.getSlaveTimeoutInSeconds()).toMillis();
 
             boolean taskRunning = false;
             Task task = null;
             while (System.currentTimeMillis() < timeout) {
-
                 // Wait while PENDING
                 task = ecsService.describeTask(startedTask.getTaskArn(), startedTask.getClusterArn());
 
@@ -193,6 +183,19 @@ public class ECSLauncher extends JNLPLauncher {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not save() agent: " + e.getMessage(), e);
         }
+    }
+
+    public void startAgentTask() {
+        LOGGER.log(Level.FINE, "[{0}]: Creating Task in cluster {1}", new Object[]{agent.getNodeName(), agent.getClusterArn()});
+
+        TaskDefinition taskDefinition = getTaskDefinition(agent.getNodeName(), agent.getTemplate(), cloud, ecsService);
+
+        startedTask = runECSTask(taskDefinition, cloud, agent.getTemplate(), ecsService, agent);
+
+        LOGGER.log(INFO, "[{0}]: TaskArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskArn()});
+        LOGGER.log(INFO, "[{0}]: TaskDefinitionArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskDefinitionArn()});
+        LOGGER.log(INFO, "[{0}]: ClusterArn: {1}", new Object[]{agent.getNodeName(), startedTask.getClusterArn()});
+        LOGGER.log(INFO, "[{0}]: ContainerInstanceArn: {1}", new Object[]{agent.getNodeName(), startedTask.getContainerInstanceArn()});
     }
 
     private TaskDefinition getTaskDefinition(String nodeName, ECSTaskTemplate template, ECSCloud cloud, ECSService ecsService) {

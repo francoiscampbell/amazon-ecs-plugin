@@ -48,6 +48,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.ListClustersRequest;
 import com.amazonaws.services.ecs.model.ListClustersResult;
+import com.amazonaws.services.ecs.model.Task;
+import com.amazonaws.services.ecs.model.TaskDefinition;
 import com.cloudbees.jenkins.plugins.amazonecs.pipeline.TaskTemplateMap;
 import com.cloudbees.jenkins.plugins.awscredentials.AWSCredentialsHelper;
 
@@ -68,6 +70,8 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
+
+import static java.util.logging.Level.INFO;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -335,7 +339,9 @@ public class ECSCloud extends Cloud {
         }
 
         public Node call() throws Exception {
-            return new ECSSlave(ECSCloud.this, this.agentName, template, new ECSLauncher(ECSCloud.this, tunnel, null));
+            ECSLauncher launcher = new ECSLauncher(ECSCloud.this, tunnel, null);
+            launcher.startAgentTask();
+            return new ECSSlave(ECSCloud.this, this.agentName, template, launcher);
         }
     }
 
