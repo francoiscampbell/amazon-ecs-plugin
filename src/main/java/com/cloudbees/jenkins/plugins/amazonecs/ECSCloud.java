@@ -340,8 +340,9 @@ public class ECSCloud extends Cloud {
 
         public Node call() throws Exception {
             ECSLauncher launcher = new ECSLauncher(ECSCloud.this, tunnel, null);
-            launcher.startAgentTask();
-            return new ECSSlave(ECSCloud.this, this.agentName, template, launcher);
+            ECSSlave agent = new ECSSlave(ECSCloud.this, this.agentName, template, launcher);
+            launcher.startAgentTask(agent);
+            return agent;
         }
     }
 

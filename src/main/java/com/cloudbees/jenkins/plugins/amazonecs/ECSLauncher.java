@@ -185,17 +185,30 @@ public class ECSLauncher extends JNLPLauncher {
         }
     }
 
-    public void startAgentTask() {
-        LOGGER.log(Level.FINE, "[{0}]: Creating Task in cluster {1}", new Object[]{agent.getNodeName(), agent.getClusterArn()});
+    public void startAgentTask(ECSSlave agent) {
+        try {
+            LOGGER.log(Level.FINE, "[{0}]: Creating Task in cluster {1}", new Object[]{agent.getNodeName(), agent.getClusterArn()});
 
-        TaskDefinition taskDefinition = getTaskDefinition(agent.getNodeName(), agent.getTemplate(), cloud, ecsService);
+            TaskDefinition taskDefinition = getTaskDefinition(agent.getNodeName(), agent.getTemplate(), cloud, ecsService);
 
-        startedTask = runECSTask(taskDefinition, cloud, agent.getTemplate(), ecsService, agent);
+            startedTask = runECSTask(taskDefinition, cloud, agent.getTemplate(), ecsService, agent);
 
-        LOGGER.log(INFO, "[{0}]: TaskArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskArn()});
-        LOGGER.log(INFO, "[{0}]: TaskDefinitionArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskDefinitionArn()});
-        LOGGER.log(INFO, "[{0}]: ClusterArn: {1}", new Object[]{agent.getNodeName(), startedTask.getClusterArn()});
-        LOGGER.log(INFO, "[{0}]: ContainerInstanceArn: {1}", new Object[]{agent.getNodeName(), startedTask.getContainerInstanceArn()});
+            LOGGER.log(INFO, "[{0}]: TaskArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskArn()});
+            LOGGER.log(INFO, "[{0}]: TaskDefinitionArn: {1}", new Object[]{agent.getNodeName(), startedTask.getTaskDefinitionArn()});
+            LOGGER.log(INFO, "[{0}]: ClusterArn: {1}", new Object[]{agent.getNodeName(), startedTask.getClusterArn()});
+            LOGGER.log(INFO, "[{0}]: ContainerInstanceArn: {1}", new Object[]{agent.getNodeName(), startedTask.getContainerInstanceArn()});
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, MessageFormat.format("[{0}]: Error in provisioning; agent={1}", agent.getNodeName(), agent), ex);
+            LOGGER.log(Level.FINER, "[{0}]: Removing Jenkins node", agent.getNodeName());
+            try {
+                agent.terminate();
+            } catch (InterruptedException e) {
+                LOGGER.log(Level.WARNING, "Unable to remove Jenkins node", e);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Unable to remove Jenkins node", e);
+            }
+            throw Throwables.propagate(ex);
+        }
     }
 
     private TaskDefinition getTaskDefinition(String nodeName, ECSTaskTemplate template, ECSCloud cloud, ECSService ecsService) {
