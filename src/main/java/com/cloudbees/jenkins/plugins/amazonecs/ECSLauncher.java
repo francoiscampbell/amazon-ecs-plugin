@@ -51,6 +51,7 @@ import hudson.AbortException;
 import hudson.model.TaskListener;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import jenkins.slaves.JnlpSlaveAgentProtocol;
 import jenkins.slaves.RemotingWorkDirSettings;
 
 /**
@@ -262,8 +263,14 @@ public class ECSLauncher extends JNLPLauncher {
             command.add("-tunnel");
             command.add(tunnel);
         }
-        command.add(slave.getComputer().getJnlpMac());
-        command.add(slave.getComputer().getName());
+
+        String nodeName = slave.getNodeName();
+        command.add(getJnlpMac(nodeName));
+        command.add(nodeName);
         return command;
+    }
+
+    private String getJnlpMac(String nodeName) {
+        return JnlpSlaveAgentProtocol.SLAVE_SECRET.mac(nodeName);
     }
 }
